@@ -1,0 +1,51 @@
+% Define rules and facts
+
+% Rule 1: If a person has a fever and a cough, they might have the flu.
+has_symptom(Person, fever) :- has_symptom(Person, cough).
+has_symptom(alice, cough).
+has_symptom(bob, fever).
+
+% Rule 2: If a person has a sore throat, they might have a cold.
+has_symptom(Person, sore_throat) :- has_symptom(Person, runny_nose).
+has_symptom(charlie, sore_throat).
+has_symptom(david, runny_nose).
+
+% Rule 3: If a person has a headache and fatigue, they might have the flu.
+has_symptom(Person, flu) :- has_symptom(Person, headache), has_symptom(Person, fatigue).
+has_symptom(eve, headache).
+has_symptom(frank, fatigue).
+
+% Goal: Define what we want to find out
+query(Person, flu) :- has_symptom(Person, flu).
+
+% Backward chaining algorithm
+backward_chain(Person, Disease) :-
+    query(Person, Disease),
+    write(Person), write(' might have '), write(Disease), nl.
+
+backward_chain(Person, Disease) :-
+    query(Person, X),   % Look for intermediate conditions
+    backward_chain(Person, Disease, [X]).
+
+backward_chain(Person, Disease, History) :-
+    query(Person, Disease),
+    write(Person), write(' might have '), write(Disease), nl,
+    write('Based on: '), write_history(History).
+
+backward_chain(Person, Disease, History) :-
+    query(Person, X),   % Look for intermediate conditions
+    not_member(X, History),  % Avoid loops
+    backward_chain(Person, Disease, [X|History]).
+
+% Utility predicate to print the history of conditions
+write_history([]).
+write_history([H|T]) :-
+    write(H),
+    (T == [] -> nl; write(' -> ')),
+    write_history(T).
+
+% Utility predicate to check if an element is not a member of a list
+not_member(_, []).
+not_member(X, [H|T]) :-
+    X \== H,
+    not_member(X, T).
