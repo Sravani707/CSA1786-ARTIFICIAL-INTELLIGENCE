@@ -1,0 +1,44 @@
+% Define sample graph as edges and their costs
+edge(a, b, 2).
+edge(a, c, 1).
+edge(b, d, 5).
+edge(c, d, 3).
+edge(c, e, 2).
+edge(d, e, 4).
+edge(e, goal, 1).
+
+% Heuristic function (h-values) for each node (used for BFS)
+heuristic(a, 5).
+heuristic(b, 3).
+heuristic(c, 2).
+heuristic(d, 2).
+heuristic(e, 1).
+heuristic(goal, 0).
+
+% Best-First Search algorithm
+best_first_search(Start, Path) :-
+    bfs([node(Start, 0, 0, [])], Path).
+
+% Base case: Goal state is reached
+bfs([node(goal, _, _, Path) | _], Path).
+
+% Recursive case: Expand the current node
+bfs([node(Current, G, _, Path) | Rest], FinalPath) :-
+    findall(node(Next, NewG, H, [Current | Path]),
+            (edge(Current, Next, Cost),
+             heuristic(Next, H),
+             NewG is G + Cost),
+            Children),
+    append(Children, Rest, UpdatedQueue),
+    sort_queue(UpdatedQueue, SortedQueue),
+    bfs(SortedQueue, FinalPath).
+
+% Sort queue based on f-values (f = g + h)
+sort_queue(Unsorted, Sorted) :-
+    keysort(Unsorted, Sorted).
+
+% Entry point
+start :-
+    best_first_search(a, Path),
+    reverse(Path, ReversedPath),
+    write('Optimal Path: '), writeln(ReversedPath).
