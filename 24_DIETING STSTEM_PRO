@@ -1,0 +1,64 @@
+% Define foods and their nutritional information (calories, carbs, sugars, fiber).
+food(apple, 95, 25, 19, 4).
+food(banana, 105, 27, 14, 3).
+food(chicken_breast, 165, 0, 0, 0).
+food(spinach, 7, 1, 0, 1).
+food(pasta, 200, 40, 2, 2).
+food(chocolate, 210, 23, 20, 3).
+
+% Define dietary guidelines for diabetes (hypothetical).
+diabetes_guidelines(Diet) :-
+    Diet = [
+        consume(vegetables, [spinach]),
+        consume(fruits, [apple, banana]),
+        consume(protein, [chicken_breast]),
+        avoid(sweets, [chocolate]),
+        limit(carbs, 60) % Limit total daily carbohydrate intake to 60 grams.
+    ].
+
+% Predicate to suggest a meal plan based on dietary guidelines.
+suggest_meal_plan(Disease, MealPlan) :-
+    Disease == diabetes,
+    diabetes_guidelines(MealPlan).
+
+% Predicate to check if a meal is within dietary guidelines.
+is_meal_within_guidelines([], _).
+is_meal_within_guidelines([consume(Type, Foods)|Rest], FoodDatabase) :-
+    sum_foods(Foods, FoodDatabase, Calories, Carbs, Sugars, Fiber),
+    write('Consume '), write(Type), write(' (Calories: '), write(Calories), write(', Carbs: '), write(Carbs),
+    write(', Sugars: '), write(Sugars), write(', Fiber: '), write(Fiber), writeln(')'),
+    is_meal_within_guidelines(Rest, FoodDatabase).
+is_meal_within_guidelines([avoid(Type, Foods)|Rest], FoodDatabase) :-
+    contains_forbidden(Foods, FoodDatabase),
+    write('Avoid '), write(Type), writeln(''),
+    is_meal_within_guidelines(Rest, FoodDatabase).
+is_meal_within_guidelines([limit(Type, Max)|Rest], FoodDatabase) :-
+    sum_foods(_, FoodDatabase, _, Carbs, _, _),
+    Carbs =< Max,
+    write('Carb intake within limit (Max: '), write(Max), writeln(')'),
+    is_meal_within_guidelines(Rest, FoodDatabase).
+is_meal_within_guidelines([limit(Type, Max)|Rest], FoodDatabase) :-
+    sum_foods(_, FoodDatabase, _, Carbs, _, _),
+    Carbs > Max,
+    write('Carb intake exceeds limit (Max: '), write(Max), writeln(')'),
+    is_meal_within_guidelines(Rest, FoodDatabase).
+
+% Predicate to calculate the sum of nutritional values of a list of foods.
+sum_foods([], _, 0, 0, 0, 0).
+sum_foods([Food|Rest], FoodDatabase, TotalCalories, TotalCarbs, TotalSugars, TotalFiber) :-
+    food(Food, Calories, Carbs, Sugars, Fiber),
+    sum_foods(Rest, FoodDatabase, RestCalories, RestCarbs, RestSugars, RestFiber),
+    TotalCalories is Calories + RestCalories,
+    TotalCarbs is Carbs + RestCarbs,
+    TotalSugars is Sugars + RestSugars,
+    TotalFiber is Fiber + RestFiber.
+
+% Predicate to check if a list of foods contains forbidden items.
+contains_forbidden([], _).
+contains_forbidden([Food|Rest], FoodDatabase) :-
+    \+ member(Food, FoodDatabase),
+    contains_forbidden(Rest, FoodDatabase).
+
+% Example usage:
+% To suggest a meal plan for diabetes:
+% ?- suggest_meal_plan(diabetes, MealPlan), is_meal_within_guidelines(MealPlan, [spinach, apple, banana, chicken_breast, chocolate]).
