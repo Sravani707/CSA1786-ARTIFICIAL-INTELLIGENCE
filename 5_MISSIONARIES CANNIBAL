@@ -1,0 +1,73 @@
+class State:
+    def __init__(self, missionaries, cannibals, boat):
+        self.missionaries = missionaries
+        self.cannibals = cannibals
+        self.boat = boat
+
+    def is_valid(self):
+        if self.missionaries < 0 or self.cannibals < 0 or self.missionaries > 3 or self.cannibals > 3:
+            return False
+        if self.missionaries < self.cannibals and self.missionaries > 0:
+            return False
+        if 3 - self.missionaries < 3 - self.cannibals and 3 - self.missionaries > 0:
+            return False
+        return True
+
+    def is_goal(self):
+        return self.missionaries == 0 and self.cannibals == 0 and self.boat == 0
+
+    def __eq__(self, other):
+        return self.missionaries == other.missionaries and self.cannibals == other.cannibals and self.boat == other.boat
+
+    def __hash__(self):
+        return hash((self.missionaries, self.cannibals, self.boat))
+
+
+def get_successors(state):
+    successors = []
+    if state.boat == 1:
+        # Boat is on the left side
+        for m in range(3):
+            for c in range(3):
+                if 1 <= m + c <= 2:
+                    new_state = State(state.missionaries - m, state.cannibals - c, 0)
+                    if new_state.is_valid():
+                        successors.append(new_state)
+    else:
+        # Boat is on the right side
+        for m in range(3):
+            for c in range(3):
+                if 1 <= m + c <= 2:
+                    new_state = State(state.missionaries + m, state.cannibals + c, 1)
+                    if new_state.is_valid():
+                        successors.append(new_state)
+    return successors
+
+
+def dfs(initial_state):
+    visited = set()
+    stack = [(initial_state, [])]
+
+    while stack:
+        state, path = stack.pop()
+        if state.is_goal():
+            return path
+        visited.add(state)
+        for successor in get_successors(state):
+            if successor not in visited:
+                stack.append((successor, path + [successor]))
+
+    return None
+
+
+def print_solution(path):
+    for i, state in enumerate(path):
+        print(f"Step {i + 1}: {state.missionaries}M-{state.cannibals}C {'boat' if state.boat == 1 else '   '} -->")
+
+if __name__ == "__main__":
+    initial_state = State(3, 3, 1)
+    solution_path = dfs(initial_state)
+    if solution_path:
+        print_solution(solution_path)
+    else:
+        print("No solution found.")
